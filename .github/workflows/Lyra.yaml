@@ -445,15 +445,13 @@ jobs:
           TIME_FORM="$(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M:%S')"
           echo "TIME=$TIME" >> $GITHUB_ENV
           echo "TIME_FORM=$TIME_FORM" >> $GITHUB_ENV
-          TAG_HEAD="Lyra-S-6.1.118"
-          echo "TAG_HEAD=$TAG_HEAD" >> $GITHUB_ENV
 
       - name: 创建发布
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: "${{ env.TAG_HEAD }}-${{ env.TIME }}"
-          name: "${{ env.TAG_HEAD }}-${{ env.FULL_VERSION }}"
+          tag_name: "${{ env.TIME }}"
+          name: "${{ env.FULL_VERSION }}"
           body: |
             - Kernel version: ${{ env.FULL_VERSION }}
             - Build time: ${{ env.TIME_FORM }}
@@ -468,4 +466,5 @@ jobs:
           prerelease: false
           files: |
             release_zips/AnyKernel3_*.zip
+
 
