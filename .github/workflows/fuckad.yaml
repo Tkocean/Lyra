@@ -27,7 +27,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup sing-box
+      - name: Setup sing-box (cache by version)
         run: |
           set -e
           VERSION=${{ github.event.inputs.singbox_version }}
@@ -72,4 +72,3 @@ jobs:
             git push
           else
             echo "No changes detected in $OUTPUT_NAME, skipping commit."
-
