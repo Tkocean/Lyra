@@ -20,45 +20,50 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Cache sing-box
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/sing-box
+          key: sing-box-${{ github.event.inputs.singbox_version }}
 
       - name: Setup sing-box
         run: |
           set -e
-          cd $GITHUB_WORKSPACE
           VERSION=${{ github.event.inputs.singbox_version }}
-          VERSION_FILE="rule/.singbox_version"
-          mkdir -p rule
-          if [ -f "$VERSION_FILE" ] && [ "$(cat $VERSION_FILE)" = "$VERSION" ]; then
-            echo "sing-box version $VERSION already installed, skipping download."
-          else
+          BIN_DIR=$HOME/.cache/sing-box/$VERSION
+          BIN_PATH=$BIN_DIR/sing-box
+          if [ ! -x "$BIN_PATH" ]; then
+            mkdir -p "$BIN_DIR"
             curl -L -o sing-box.tar.gz https://github.com/SagerNet/sing-box/releases/download/v${VERSION}/sing-box-${VERSION}-linux-amd64.tar.gz
             tar -xzf sing-box.tar.gz
-            sudo mv sing-box-${VERSION}-linux-amd64/sing-box /usr/local/bin/sing-box
-            echo $VERSION > "$VERSION_FILE"
+            mv sing-box-${VERSION}-linux-amd64/sing-box "$BIN_PATH"
+            chmod +x "$BIN_PATH"
           fi
+          sudo ln -sf "$BIN_PATH" /usr/local/bin/sing-box
 
-      - name: Compile rule-set to SRS
+      - name: Compile rule-set
         run: |
           set -e
-          cd $GITHUB_WORKSPACE
+          cd "$GITHUB_WORKSPACE"
           mkdir -p rule
           RULE_URL=${{ github.event.inputs.rule_url }}
           OUTPUT_NAME=${{ github.event.inputs.output_name }}
           TEMP_JSON=rule/temp_fuckad.json
-          curl -L -o $TEMP_JSON "$RULE_URL"
-          sing-box rule-set compile $TEMP_JSON -o "rule/$OUTPUT_NAME"
-          rm $TEMP_JSON
+          curl -L -o "$TEMP_JSON" "$RULE_URL"
+          sing-box rule-set compile "$TEMP_JSON" -o "rule/$OUTPUT_NAME"
+          rm -f "$TEMP_JSON"
 
-      - name: Commit generated SRS if changed
+      - name: Commit result
         run: |
           set -e
-          cd $GITHUB_WORKSPACE
+          cd "$GITHUB_WORKSPACE"
           OUTPUT_NAME=${{ github.event.inputs.output_name }}
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
+          git config user.name github-actions
+          git config user.email actions@github.com
           git add "rule/$OUTPUT_NAME"
           if ! git diff --cached --quiet; then
             git commit -m "build: update $OUTPUT_NAME (sing-box v${{ github.event.inputs.singbox_version }})"
             git push
+          fi
