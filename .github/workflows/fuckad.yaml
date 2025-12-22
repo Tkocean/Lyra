@@ -1,4 +1,4 @@
-name: Build fuckad SRS
+name: sing-box fuckad srs
 
 on:
   workflow_dispatch:
@@ -27,29 +27,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install sing-box
+      - name: Setup sing-box (cache by version)
         run: |
           VERSION=${{ github.event.inputs.singbox_version }}
-          echo "Installing sing-box version $VERSION"
-          curl -L -o sing-box.tar.gz \
-            https://github.com/SagerNet/sing-box/releases/download/v${VERSION}/sing-box-${VERSION}-linux-amd64.tar.gz
-          tar -xzf sing-box.tar.gz
-          sudo mv sing-box-${VERSION}-linux-amd64/sing-box /usr/local/bin/sing-box
-          sing-box version
+          VERSION_FILE="rule/.singbox_version"
+          mkdir -p rule
+          if [ -f "$VERSION_FILE" ] && [ "$(cat $VERSION_FILE)" = "$VERSION" ]; then
+            echo "sing-box version $VERSION already installed, skipping download."
+          else
+            echo "Installing sing-box version $VERSION ..."
+            curl -L -o sing-box.tar.gz \
+              https://github.com/SagerNet/sing-box/releases/download/v${VERSION}/sing-box-${VERSION}-linux-amd64.tar.gz
+            tar -xzf sing-box.tar.gz
+            sudo mv sing-box-${VERSION}-linux-amd64/sing-box /usr/local/bin/sing-box
+            sing-box version
+            echo $VERSION > "$VERSION_FILE"
+          fi
 
       - name: Compile rule-set to SRS
         run: |
           mkdir -p rule
           RULE_URL=${{ github.event.inputs.rule_url }}
           OUTPUT_NAME=${{ github.event.inputs.output_name }}
-          echo "Compiling rule $RULE_URL to rule/$OUTPUT_NAME"
-          sing-box rule-set compile "$RULE_URL" -o "rule/$OUTPUT_NAME"
-
-      - name: Commit generated SRS
-        run: |
-          OUTPUT_NAME=${{ github.event.inputs.output_name }}
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add "rule/$OUTPUT_NAME"
-          git diff --cached --quiet || git commit -m "build: update $OUTPUT_NAME (sing-box v${{ github.event.inputs.singbox_version }})"
-          git push
+          TEMP_JSON=temp_fuckad.json
+          echo "Downloading $RULE_URL to $TEMP_JSON ..."
+          curl -L -o $TEMP_JSON "$RULE_URL"
+          echo "Compiling $TEMP_JSON to rule/$OUTPUT_NAME ..."
+          sing-box rule-set compile $TEMP_JSON -o "rule/$OUTPUT_NAME"
+          rm $TEMP_JSON
