@@ -7,13 +7,13 @@ on:
   workflow_dispatch:
     inputs:
       singbox_version:
-        required: false
+        required: true
         default: '1.12.13'
       rule_url:
-        required: false
+        required: true
         default: 'https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Singbox.json'
       output_name:
-        required: false
+        required: true
         default: 'fuckad.srs'
   schedule:
     - cron: '0 22 * * *'
@@ -50,12 +50,12 @@ jobs:
         run: |
           set -e
           cd "$GITHUB_WORKSPACE"
-          mkdir -p rule
+          mkdir -p lib
           RULE_URL=${{ github.event.inputs.rule_url }}
           OUTPUT_NAME=${{ github.event.inputs.output_name }}
-          TEMP_JSON=rule/temp_fuckad.json
+          TEMP_JSON=lib/temp_fuckad.json
           curl -L -o "$TEMP_JSON" "$RULE_URL"
-          sing-box rule-set compile "$TEMP_JSON" -o "rule/$OUTPUT_NAME"
+          sing-box rule-set compile "$TEMP_JSON" -o "lib/$OUTPUT_NAME"
           rm -f "$TEMP_JSON"
 
       - name: Commit result
@@ -67,6 +67,6 @@ jobs:
           git config user.email actions@github.com
           git add "rule/$OUTPUT_NAME"
           if ! git diff --cached --quiet; then
-            git commit -m "build: update $OUTPUT_NAME (sing-box v${{ github.event.inputs.singbox_version }})"
+            git commit -m "build: update $OUTPUT_NAME"m
             git push
           fi
