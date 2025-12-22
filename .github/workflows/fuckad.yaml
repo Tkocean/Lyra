@@ -1,0 +1,40 @@
+name: Build sing-box SRS (v1.12.13)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *"
+
+env:
+  SING_BOX_VERSION: 1.12.13
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install sing-box (v1.12.13)
+        run: |
+          curl -L -o sing-box.tar.gz \
+            https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz
+          tar -xzf sing-box.tar.gz
+          sudo mv sing-box-${SING_BOX_VERSION}-linux-amd64/sing-box /usr/local/bin/sing-box
+          sing-box version
+
+      - name: Compile rule-set to SRS
+        run: |
+          mkdir -p rule
+          sing-box rule-set compile \
+            "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Singbox.json" \
+            -o rule/fuckad.srs
+
+      - name: Commit generated SRS
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add rule/fuckad.srs
+          git diff --cached --quiet || git commit -m "build: update fuckad.srs (sing-box v${SING_BOX_VERSION})"
+          git push
