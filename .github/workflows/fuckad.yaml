@@ -1,4 +1,4 @@
-name: Build sing-box (fuckad.srs)
+name: Build sing-box (rules.srs)
 
 on:
   workflow_dispatch:
