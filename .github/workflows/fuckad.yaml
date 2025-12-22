@@ -1,12 +1,23 @@
-name: Build sing-box SRS (v1.12.13)
+name: Build fuckad SRS
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 3 * * *"
+    inputs:
+      singbox_version:
+        description: 'Sing-box version to use'
+        required: false
+        default: '1.12.13'
+      rule_url:
+        description: 'URL of sing-box JSON rule'
+        required: false
+        default: 'https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Singbox.json'
+      output_name:
+        description: 'Output SRS file name'
+        required: false
+        default: 'fuckad.srs'
 
-env:
-  SING_BOX_VERSION: 1.12.13
+  schedule:
+    - cron: '0 22 * * *'
 
 jobs:
   build:
@@ -16,25 +27,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install sing-box (v1.12.13)
+      - name: Install sing-box
         run: |
+          VERSION=${{ github.event.inputs.singbox_version }}
+          echo "Installing sing-box version $VERSION"
           curl -L -o sing-box.tar.gz \
-            https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz
+            https://github.com/SagerNet/sing-box/releases/download/v${VERSION}/sing-box-${VERSION}-linux-amd64.tar.gz
           tar -xzf sing-box.tar.gz
-          sudo mv sing-box-${SING_BOX_VERSION}-linux-amd64/sing-box /usr/local/bin/sing-box
+          sudo mv sing-box-${VERSION}-linux-amd64/sing-box /usr/local/bin/sing-box
           sing-box version
 
       - name: Compile rule-set to SRS
         run: |
           mkdir -p rule
-          sing-box rule-set compile \
-            "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Singbox.json" \
-            -o rule/fuckad.srs
+          RULE_URL=${{ github.event.inputs.rule_url }}
+          OUTPUT_NAME=${{ github.event.inputs.output_name }}
+          echo "Compiling rule $RULE_URL to rule/$OUTPUT_NAME"
+          sing-box rule-set compile "$RULE_URL" -o "rule/$OUTPUT_NAME"
 
       - name: Commit generated SRS
         run: |
+          OUTPUT_NAME=${{ github.event.inputs.output_name }}
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add rule/fuckad.srs
-          git diff --cached --quiet || git commit -m "build: update fuckad.srs (sing-box v${SING_BOX_VERSION})"
+          git add "rule/$OUTPUT_NAME"
+          git diff --cached --quiet || git commit -m "build: update $OUTPUT_NAME (sing-box v${{ github.event.inputs.singbox_version }})"
           git push
