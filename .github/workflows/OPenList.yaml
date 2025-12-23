@@ -125,7 +125,7 @@ jobs:
           git clone https://github.com/OpenListTeam/OpenList-Frontend.git
           cd OpenList-Frontend
           chmod +x build.sh
-          ./build.sh --release --lite --compress --skip-i18n
+          ./build.sh --dev --lite --compress --skip-i18n
       - uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
