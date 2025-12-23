@@ -124,10 +124,13 @@ jobs:
           cd OpenList-Frontend
           git fetch --tags
           git checkout main
+      - name: Install frontend dependencies (resolve conflicts)
+        run: |
+          cd OpenList-Frontend
+          npm install --legacy-peer-deps
       - name: Build Frontend
         run: |
           cd OpenList-Frontend
-          npm install
           npm run build -- --release --lite --compress --skip-i18n
       - uses: actions/upload-artifact@v4
         with:
