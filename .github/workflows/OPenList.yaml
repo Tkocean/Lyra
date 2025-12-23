@@ -118,7 +118,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20'
-      - name: Clone OpenList Frontend
+      - name: Clone OPenList Frontend
         run: |
           git clone https://github.com/OpenListTeam/OpenList-Frontend.git
           cd OpenList-Frontend
