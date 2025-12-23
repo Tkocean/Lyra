@@ -11,11 +11,15 @@ on:
         description: 'Go version'
         required: true
         default: '1.25.5'
+      build_frontend_only:
+        description: 'ONLY build frontend'
+        required: true
+        default: 'false'
 
 jobs:
   android:
+    if: ${{ inputs.build_frontend_only == 'false' }}
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -63,8 +67,8 @@ jobs:
           path: openlist-android-arm64
 
   windows:
+    if: ${{ inputs.build_frontend_only == 'false' }}
     runs-on: windows-latest
-
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -110,20 +114,15 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
-      - name: Clone OPenList Frontend
-        run: |
-          git clone https://github.com/OpenListTeam/OpenList-Frontend.git
-          cd OpenList-Frontend
-          git checkout rolling
       - name: Build Frontend
         run: |
+          git clone https://github.com/OpenListTeam/OpenList-Frontend.git
           cd OpenList-Frontend
           chmod +x build.sh
           ./build.sh --release --lite --compress --skip-i18n
