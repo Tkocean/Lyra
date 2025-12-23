@@ -122,6 +122,7 @@ jobs:
           node-version: '20'
       - name: Build Frontend
         run: |
+          npm install -g pnpm
           git clone https://github.com/OpenListTeam/OpenList-Frontend.git
           cd OpenList-Frontend
           chmod +x build.sh
