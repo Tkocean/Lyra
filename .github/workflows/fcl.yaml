@@ -1,0 +1,77 @@
+name: Build FCL Android arm64
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'FCL git tag'
+        required: false
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_API_LEVEL: 36
+      ANDROID_BUILD_TOOLS: "36.0.0"
+      NDK_VERSION: "r26d"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout FCL version or latest
+        run: |
+          git fetch --all
+          if [ -z "${{ github.event.inputs.version }}" ]; then
+            git checkout main
+          else
+            git checkout tags/${{ github.event.inputs.version }}
+          fi
+
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-cache-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+
+      - uses: actions/cache@v3
+        id: ndk-cache
+        with:
+          path: android-ndk-${{ env.NDK_VERSION }}
+          key: ndk-cache-${{ env.NDK_VERSION }}
+
+      - name: Download NDK if missing
+        if: steps.ndk-cache.outputs.cache-hit != 'true'
+        run: |
+          curl -L https://dl.google.com/android/repository/android-ndk-${{ env.NDK_VERSION }}-linux.zip -o ndk.zip
+          unzip -q ndk.zip
+
+      - name: Build FCL APK
+        run: |
+          export ANDROID_NDK_HOME="$PWD/android-ndk-${{ env.NDK_VERSION }}"
+          export PATH="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
+          export CFLAGS="-O3 -flto -funroll-loops -fomit-frame-pointer -ffunction-sections -fdata-sections -fPIC -falign-functions=128"
+          export CXXFLAGS="$CFLAGS"
+          export LDFLAGS="-flto -Wl,--icf=safe"
+          chmod +x ./gradlew
+          ./gradlew clean assembleRelease --parallel --max-workers=4 -Pandroid.useAndroidX=true
+          APK_PATH=$(find ./app/build/outputs/apk/release -name "*-release.apk" | head -n 1)
+          if [ -f "$APK_PATH" ]; then
+            cp "$APK_PATH" "$PWD/fcl-android-arm64.apk"
+          else
+            exit 1
+          fi
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: fcl-android-arm64
+          path: fcl-android-arm64.apk
