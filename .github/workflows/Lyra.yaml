@@ -19,12 +19,12 @@ on:
           - 'true'
           - 'default'
       lz4_enable:
-        description: 'Install lz4 1.10.0 + zstd 1.5.7 patch'
+        description: 'Install Patch'
         required: true
         type: boolean
         default: 'true'
       better_net:
-        description: 'Enable extended network configuration'
+        description: 'Enable extended configuration'
         required: true
         type: boolean
         default: 'true'
@@ -416,3 +416,4 @@ jobs:
           prerelease: false
           files: |
             release_zips/AnyKernel3_*.zip
+
