@@ -418,17 +418,18 @@ jobs:
           body: |
             - Kernel version: ${{ env.FULL_VERSION }}
             - Build time: ${{ env.TIME_FORM }}
-            - LZ4 support: ${{ github.event.inputs.lz4_enable }}
-            - Enhanced network features: ${{ github.event.inputs.better_net }}
+            - Install Patch: ${{ github.event.inputs.lz4_enable }}
+            - Enable extended configuration: ${{ github.event.inputs.better_net }}
             - BBR/Brutal congestion control algorithms support: ${{ github.event.inputs.bbr_enable }}
-            - Samsung SSG I/O scheduler support: ${{ github.event.inputs.ssg_enable }}
+            - Samsung SSG I/O scheduler: ${{ github.event.inputs.ssg_enable }}
             - Re-Kernel support: ${{ github.event.inputs.rekernel_enable }}
-            - Kernel-level baseband protection support: ${{ github.event.inputs.baseband_guard }}
+            - Kernel-level baseband protection: ${{ github.event.inputs.baseband_guard }}
             - [HorizonKernelFlasher](https://github.com/libxzr/HorizonKernelFlasher/releases)
           draft: false
           prerelease: false
           files: |
             release_zips/AnyKernel3_*.zip
+
 
 
 
