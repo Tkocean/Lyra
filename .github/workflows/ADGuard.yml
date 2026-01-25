@@ -4,12 +4,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-amd64:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        arch: [amd64, arm64]
-
     steps:
     - name: Clone AdGuardHome
       run: git clone --depth=1 https://github.com/AdguardTeam/AdGuardHome.git
@@ -17,30 +13,57 @@ jobs:
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -y clang llvm lld build-essential ca-certificates
 
-    - name: Build AdGuardHome
+    - name: Build AdGuardHome amd64
       shell: bash
       run: |
         set -euo pipefail
         cd AdGuardHome
         mkdir -p ../build
         export GOOS=linux
-        export GOARCH=${{ matrix.arch }}
+        export GOARCH=amd64
         export CGO_ENABLED=1
         export CC=clang
         export CXX=clang++
         export LD=ld.lld
         export SIGN=0
-        if [ "${{ matrix.arch }}" = "arm64" ]; then
-          export CGO_CFLAGS="-O3 -funroll-loops -flto -fomit-frame-pointer -ffast-math -fPIC -falign-functions=128 -fno-unwind-tables -fno-asynchronous-unwind-tables -ffunction-sections -fdata-sections"
-          export CGO_LDFLAGS="-flto -ldl -Wl,-O1 -Wl,--gc-sections -Wl,--icf=safe -Wl,-z,max-page-size=0x1000"
-        else
-          export CGO_CFLAGS="-O3 -march=x86-64-v3 -mtune=haswell -funroll-loops -flto -fomit-frame-pointer -ffast-math -fPIC -falign-functions=128 -fno-unwind-tables -fno-asynchronous-unwind-tables -ffunction-sections -fdata-sections"
-          export CGO_LDFLAGS="-flto -Wl,-O1 -Wl,--gc-sections -Wl,--icf=safe -Wl,-z,max-page-size=0x1000"
-        fi
-        go build -trimpath -ldflags "-s -w -X main.Version=Lyra@Tkocean" -o ../build/AdGuardHome_linux_${{ matrix.arch }} main.go
+        export CGO_CFLAGS="-O3 -march=x86-64-v3 -mtune=haswell -funroll-loops -flto -fomit-frame-pointer -ffast-math -fPIC -falign-functions=128 -fno-unwind-tables -fno-asynchronous-unwind-tables -ffunction-sections -fdata-sections"
+        export CGO_LDFLAGS="-flto -Wl,-O1 -Wl,--gc-sections -Wl,--icf=safe -Wl,-z,max-page-size=0x1000"
+        go build -trimpath -ldflags "-s -w -X main.Version=Lyra@Tkocean" -o ../build/AdGuardHome-linux-amd64 main.go
 
-    - name: Upload artifact
+    - name: Upload amd64 artifact
       uses: actions/upload-artifact@v4
       with:
-        name: AdGuardHome-linux-${{ matrix.arch }}
-        path: build/AdGuardHome_linux_${{ matrix.arch }}
+        name: AdGuardHome-linux-amd64
+        path: build/AdGuardHome-linux-amd64
+
+  build-arm64:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone AdGuardHome
+      run: git clone --depth=1 https://github.com/AdguardTeam/AdGuardHome.git
+
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y clang llvm lld build-essential ca-certificates
+
+    - name: Build AdGuardHome arm64
+      shell: bash
+      run: |
+        set -euo pipefail
+        cd AdGuardHome
+        mkdir -p ../build
+        export GOOS=linux
+        export GOARCH=arm64
+        export CGO_ENABLED=1
+        export CC=clang
+        export CXX=clang++
+        export LD=ld.lld
+        export SIGN=0
+        export CGO_CFLAGS="-O3 -funroll-loops -flto -fomit-frame-pointer -ffast-math -fPIC -falign-functions=128 -fno-unwind-tables -fno-asynchronous-unwind-tables -ffunction-sections -fdata-sections"
+        export CGO_LDFLAGS="-flto -ldl -Wl,-O1 -Wl,--gc-sections -Wl,--icf=safe -Wl,-z,max-page-size=0x1000"
+        go build -trimpath -ldflags "-s -w -X main.Version=Lyra@Tkocean" -o ../build/AdGuardHome-linux-arm64 main.go
+
+    - name: Upload arm64 artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: AdGuardHome-linux-arm64
+        path: build/AdGuardHome-linux-arm64
