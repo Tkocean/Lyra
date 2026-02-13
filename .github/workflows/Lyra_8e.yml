@@ -470,6 +470,7 @@ jobs:
           #跳过将uapi标准头安装到 usr/include 目录的不必要操作，节省编译时间
           echo "CONFIG_HEADERS_INSTALL=n" >> ./common/arch/arm64/configs/gki_defconfig
           
+          
       - name: 启用网络功能增强优化配置
         if: inputs.better_net
         run: |
@@ -505,6 +506,8 @@ jobs:
           cd common
           wget https://github.com/cctv18/oppo_oplus_realme_sm8750/raw/refs/heads/main/other_patch/config.patch
           patch -p1 -F 3 < config.patch || true
+          wget https://github.com/Tkocean/Lyra/raw/refs/heads/main/lib/unicode.patch
+          patch -p1 -F 3 < unicode.patch || true
 
       - name: 添加 BBR 等一系列拥塞控制算法
         run: |
