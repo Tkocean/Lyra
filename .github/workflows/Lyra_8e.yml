@@ -1,4 +1,4 @@
-name: 6.6.57-LYRA-S-Tkocean
+name: 6.6.57-Lyra-s-tkocean
 
 env:
   TZ: Asia/Shanghai
@@ -83,7 +83,7 @@ on:
         description: '内核后缀(留空默认,开头别加连字符,勿加空格等影响指令运行的保留字符)'
         required: false
         type: string
-        default: 'Lyra-s-tkocean-abogki428889875-4k'
+        default: 'Lyra-s-tkocean-abogki268889895-4k'
 
 jobs:
   build:
@@ -789,8 +789,8 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: "${{ env.TAG_HEAD }}-${{ env.TIME }}"
-          name: "${{ env.TAG_HEAD }}-${{ env.FULL_VERSION }}"
+          tag_name: "${{ env.TIME }}"
+          name: "Lyra-s-tkocean-abogki268889895-4k"
           body: |
             ### 📱 欧加真 ${{ env.KSU_TYPENAME }} SM8750 通用内核 | 构建信息
             - 内核版本号: ${{ env.FULL_VERSION }}
