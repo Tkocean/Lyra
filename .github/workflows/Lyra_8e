@@ -1,4 +1,4 @@
-name: 加速版构建 6.6.57 欧加真OKI内核
+name: 6.6.57-LYRA-S-Tkocean
 
 env:
   TZ: Asia/Shanghai
@@ -83,7 +83,7 @@ on:
         description: '内核后缀(留空默认,开头别加连字符,勿加空格等影响指令运行的保留字符)'
         required: false
         type: string
-        default: ''
+        default: 'LYRA-S-Tkocean'
 
 jobs:
   build:
