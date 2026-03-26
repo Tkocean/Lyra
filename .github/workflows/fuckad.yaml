@@ -11,7 +11,7 @@ on:
         default: '1.12.18'
       rule_url:
         required: true
-        default: 'https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Singbox.json'
+        default: 'https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/refs/heads/main/AWAvenue-Ads-Rule.txt'
       output_name:
         required: true
         default: 'fuckad.srs'
