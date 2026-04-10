@@ -35,45 +35,52 @@ jobs:
           echo "#!/bin/sh" > version.sh
           echo "printf \"Lyra\"" >> version.sh
           chmod +x version.sh
-          mkdir -p subprojects
-          
-          echo "[wrap-git]" > subprojects/libass.wrap
-          echo "url = https://github.com/libass/libass" >> subprojects/libass.wrap
-          echo "revision = master" >> subprojects/libass.wrap
-          echo "depth = 1" >> subprojects/libass.wrap
-          
-          echo "[wrap-git]" > subprojects/ffmpeg.wrap
-          echo "url = https://gitlab.freedesktop.org/gstreamer/meson-ports/ffmpeg.git" >> subprojects/ffmpeg.wrap
-          echo "revision = meson-8.0" >> subprojects/ffmpeg.wrap
-          echo "depth = 1" >> subprojects/ffmpeg.wrap
-          echo "[provide]" >> subprojects/ffmpeg.wrap
-          echo "libavcodec = libavcodec_dep" >> subprojects/ffmpeg.wrap
-          echo "libavdevice = libavdevice_dep" >> subprojects/ffmpeg.wrap
-          echo "libavfilter = libavfilter_dep" >> subprojects/ffmpeg.wrap
-          echo "libavformat = libavformat_dep" >> subprojects/ffmpeg.wrap
-          echo "libavutil = libavutil_dep" >> subprojects/ffmpeg.wrap
-          echo "libswresample = libswresample_dep" >> subprojects/ffmpeg.wrap
-          echo "libswscale = libswscale_dep" >> subprojects/ffmpeg.wrap
+
+      - name: Create Cross File
+        shell: bash
+        run: |
+          WORKSPACE=$(pwd -W)
+          echo "[binaries]" > mpv-cross.txt
+          echo "c = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-clang.exe'" >> mpv-cross.txt
+          echo "cpp = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-clang++.exe'" >> mpv-cross.txt
+          echo "ar = '$WORKSPACE/llvm-mingw/bin/llvm-ar.exe'" >> mpv-cross.txt
+          echo "strip = '$WORKSPACE/llvm-mingw/bin/llvm-strip.exe'" >> mpv-cross.txt
+          echo "windres = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-windres.exe'" >> mpv-cross.txt
+          echo "pkg-config = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-pkg-config.exe'" >> mpv-cross.txt
+          echo "[host_machine]" >> mpv-cross.txt
+          echo "system = 'windows'" >> mpv-cross.txt
+          echo "cpu_family = 'x86_64'" >> mpv-cross.txt
+          echo "cpu = 'x86_64'" >> mpv-cross.txt
+          echo "endian = 'little'" >> mpv-cross.txt
 
       - name: Build
         shell: bash
         run: |
           set -euo pipefail
-          export PATH="$PWD/llvm-mingw/bin:$PATH"
-          export CC="x86_64-w64-mingw32-clang"
-          export CXX="x86_64-w64-mingw32-clang++"
-          export AR="llvm-ar"
-          export STRIP="llvm-strip"
-
+          WORKSPACE=$(pwd -W)
+          
           export CFLAGS="-O3 -mavx2 -funroll-loops -flto=full -fomit-frame-pointer -ffast-math -falign-functions=128 -ffunction-sections -fdata-sections"
           export CXXFLAGS="$CFLAGS -fno-rtti -fno-exceptions"
           export LDFLAGS="-flto=full -static -Wl,-O3 -Wl,--gc-sections -Wl,--icf=all -Wl,--sort-common -Wl,--as-needed"
           
           cd mpv
-          meson setup build --buildtype=release -Dcplayer=true -Dlibmpv=false -Dlua=disabled -Djavascript=disabled -Dvulkan=enabled -Dd3d11=enabled -Dwasapi=enabled
+          meson setup build \
+            --cross-file=../mpv-cross.txt \
+            --buildtype=release \
+            -Dcplayer=true \
+            -Dlibmpv=false \
+            -Dlua=disabled \
+            -Djavascript=disabled \
+            -Dvulkan=enabled \
+            -Dd3d11=enabled \
+            -Dwasapi=enabled \
+            -Dlibplacebo=disabled \
+            -Dshaderc=disabled \
+            -Dspirv-cross=disabled
+          
           ninja -C build
-          $STRIP build/mpv.exe
-          mv build/mpv.exe ../MPv.exe
+          ../llvm-mingw/bin/llvm-strip.exe build/mpv.exe
+          mv build/mpv.exe "$WORKSPACE/MPv.exe"
 
       - name: Upload
         uses: actions/upload-artifact@v4
