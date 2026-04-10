@@ -6,11 +6,11 @@ on:
       version:
         description: 'OPenList git tag version'
         required: true
-        default: 'v4.1.10'
+        default: 'v4.2.1'
       go_version:
         description: 'Go version'
         required: true
-        default: '1.26.0'
+        default: '1.26.1'
       build_frontend_only:
         description: 'ONLY build frontend'
         required: true
