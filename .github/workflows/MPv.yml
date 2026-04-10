@@ -1,0 +1,147 @@
+name: Build MPv (Windows x64)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mpv_version:
+        description: 'mpv base version (for checkout)'
+        required: true
+        default: 'v0.41.0'
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Build Tools
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Install Meson & Ninja
+        run: |
+          pip install meson ninja
+
+      - name: Setup llvm-mingw Toolchain
+        shell: bash
+        run: |
+          curl -L https://github.com/mstorsjo/llvm-mingw/releases/download/20240320/llvm-mingw-20240320-msvcrt-x86_64.zip -o llvm-mingw.zip
+          unzip -q llvm-mingw.zip
+          mv llvm-mingw-20240320-msvcrt-x86_64 llvm-mingw
+          echo "TOOLCHAIN_ROOT=$GITHUB_WORKSPACE/llvm-mingw" >> $GITHUB_ENV
+          echo "PATH=$GITHUB_WORKSPACE/llvm-mingw/bin:$PATH" >> $GITHUB_ENV
+
+      - name: Clone mpv Source & Inject Custom Version "Lyra"
+        shell: bash
+        run: |
+          git clone https://github.com/mpv-player/mpv.git
+          cd mpv
+          git fetch --tags
+          git checkout tags/${{ inputs.mpv_version }}
+
+          cat > version.sh << 'EOF'
+          #!/bin/sh
+          printf "Lyra"
+          EOF
+          chmod +x version.sh
+
+      - name: Configure & Build Lyra Edition mpv
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          export CC="x86_64-w64-mingw32-clang"
+          export CXX="x86_64-w64-mingw32-clang++"
+          export AR="llvm-ar"
+          export STRIP="llvm-strip"
+          export PKG_CONFIG="pkg-config"
+          
+          export CFLAGS="-O3 \
+          -march=alderlake \
+          -mtune=alderlake \
+          -msse4.2 \
+          -mavx2 \
+          -mfma \
+          -mbmi \
+          -mbmi2 \
+          -mprefer-vector-width=256 \
+          -funroll-loops \
+          -funroll-all-loops \
+          -fprefetch-loop-arrays \
+          -flto=full \
+          -fomit-frame-pointer \
+          -ffast-math \
+          -ffp-contract=fast \
+          -falign-functions=128 \
+          -falign-loops=32 \
+          -falign-jumps=32 \
+          -fno-unwind-tables \
+          -fno-asynchronous-unwind-tables \
+          -ffunction-sections \
+          -fdata-sections \
+          -fno-math-errno \
+          -fno-trapping-math"
+          
+          export CXXFLAGS="$CFLAGS -fno-rtti -fno-exceptions"
+          
+          export LDFLAGS="-flto=full \
+          -Wl,-O3 \
+          -Wl,--gc-sections \
+          -Wl,--icf=all \
+          -Wl,--sort-common \
+          -Wl,--as-needed"
+
+          cd mpv
+
+          meson setup build \
+            --buildtype=release \
+            --prefix="$GITHUB_WORKSPACE/install" \
+            -Db_lto=true \
+            -Db_lto_mode=thin \
+            -Db_ndebug=if-release \
+            -Doptimization=3 \
+            -Dauto_features=disabled \
+            \
+
+            -Dcplayer=enabled \
+            -Dlibmpv=false \
+            -Dffmpeg=enabled \
+            -Dlibass=enabled \
+            \
+
+            -Dvulkan=enabled \
+            -Dd3d11=enabled \
+            -Degl=enabled \
+            -Dgl=enabled \
+            \
+
+            -Dwasapi=enabled \
+            \
+            -Dlua=disabled \
+            -Djavascript=disabled \
+            -Dcplugins=disabled \
+            -Dnetwork=disabled \
+            -Dbluray=disabled \
+            -Ddvdnav=disabled \
+            -Dcdda=disabled \
+            -Ddvbin=disabled \
+            -Dlibarchive=disabled \
+            -Drubberband=disabled \
+            -Dzimg=disabled \
+            -Dlcms2=disabled \
+            -Diconv=disabled \
+            -Dtest=disabled \
+            -Dmanpage-build=disabled
+
+          ninja -C build -j$(nproc)
+          
+          $STRIP build/mpv.exe
+
+          mv build/mpv.exe "$GITHUB_WORKSPACE/mpv.exe"
+
+      - name: Upload Lyra Edition Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: mpv-Lyra-Edition-i7-12700H-RTX3060
+          path: mpv.exe
