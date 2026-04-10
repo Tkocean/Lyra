@@ -12,23 +12,21 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install Tools
         run: pip install meson ninja
-      
-      - name: Download Toolchain
+
+      - name: Get Toolchain
         shell: bash
         run: |
           curl -L https://github.com/mstorsjo/llvm-mingw/releases/download/20240320/llvm-mingw-20240320-msvcrt-x86_64.zip -o llvm-mingw.zip
           unzip -q llvm-mingw.zip
           mv llvm-mingw-20240320-msvcrt-x86_64 llvm-mingw
-      
-      - name: Clone mpv
+
+      - name: Get mpv
         shell: bash
         run: |
           git clone https://github.com/mpv-player/mpv.git
@@ -37,13 +35,6 @@ jobs:
           echo "#!/bin/sh" > version.sh
           echo "printf \"Lyra\"" >> version.sh
           chmod +x version.sh
-      
-      - name: Prepare Dependencies
-        shell: bash
-        run: |
-          cd mpv
-          meson wrap update-db
-          meson wrap install expat harfbuzz freetype2 libpng zlib
           mkdir -p subprojects
           
           echo "[wrap-git]" > subprojects/libass.wrap
@@ -63,90 +54,27 @@ jobs:
           echo "libavutil = libavutil_dep" >> subprojects/ffmpeg.wrap
           echo "libswresample = libswresample_dep" >> subprojects/ffmpeg.wrap
           echo "libswscale = libswscale_dep" >> subprojects/ffmpeg.wrap
-      
-      - name: Create Cross File
-        shell: bash
-        run: |
-          WORKSPACE=$(pwd -W)
-          echo "[binaries]" > mpv-cross.txt
-          echo "c = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-clang.exe'" >> mpv-cross.txt
-          echo "cpp = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-clang++.exe'" >> mpv-cross.txt
-          echo "ar = '$WORKSPACE/llvm-mingw/bin/llvm-ar.exe'" >> mpv-cross.txt
-          echo "strip = '$WORKSPACE/llvm-mingw/bin/llvm-strip.exe'" >> mpv-cross.txt
-          echo "windres = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-windres.exe'" >> mpv-cross.txt
-          echo "pkg-config = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-pkg-config.exe'" >> mpv-cross.txt
-          echo "[host_machine]" >> mpv-cross.txt
-          echo "system = 'windows'" >> mpv-cross.txt
-          echo "cpu_family = 'x86_64'" >> mpv-cross.txt
-          echo "cpu = 'x86_64'" >> mpv-cross.txt
-          echo "endian = 'little'" >> mpv-cross.txt
-          echo "[properties]" >> mpv-cross.txt
-          echo "sys_root = '$WORKSPACE/llvm-mingw/x86_64-w64-mingw32'" >> mpv-cross.txt
-          echo "pkg_config_libdir = '$WORKSPACE/llvm-mingw/x86_64-w64-mingw32/lib/pkgconfig'" >> mpv-cross.txt
-          echo "prefer_static = true" >> mpv-cross.txt
-      
+
       - name: Build
         shell: bash
         run: |
           set -euo pipefail
-          WORKSPACE=$(pwd -W)
-          
-          # ========== 完全保留你的优化参数 ==========
+          export PATH="$PWD/llvm-mingw/bin:$PATH"
+          export CC="x86_64-w64-mingw32-clang"
+          export CXX="x86_64-w64-mingw32-clang++"
+          export AR="llvm-ar"
+          export STRIP="llvm-strip"
+
           export CFLAGS="-O3 -mavx2 -funroll-loops -flto=full -fomit-frame-pointer -ffast-math -falign-functions=128 -ffunction-sections -fdata-sections"
           export CXXFLAGS="$CFLAGS -fno-rtti -fno-exceptions"
           export LDFLAGS="-flto=full -static -Wl,-O3 -Wl,--gc-sections -Wl,--icf=all -Wl,--sort-common -Wl,--as-needed"
           
           cd mpv
-          meson setup build \
-            --cross-file=../mpv-cross.txt \
-            --buildtype=release \
-            --prefix="$WORKSPACE/install" \
-            -Ddefault_library=static \
-            -Dprefer_static=true \
-            -Db_lto=true \
-            -Db_lto_mode=full \
-            -Db_ndebug=if-release \
-            -Doptimization=3 \
-            -Dcplayer=true \
-            -Dlibmpv=false \
-            -Dbuild-date=false \
-            -Dtests=false \
-            -Dlua=disabled \
-            -Djavascript=disabled \
-            -Dcplugins=disabled \
-            -Dcdda=disabled \
-            -Ddvbin=disabled \
-            -Ddvdnav=disabled \
-            -Dlibbluray=disabled \
-            -Dlibarchive=disabled \
-            -Drubberband=disabled \
-            -Dzimg=disabled \
-            -Dlcms2=disabled \
-            -Duchardet=disabled \
-            -Dvapoursynth=disabled \
-            -Dsdl2=disabled \
-            -Dsdl2-gamepad=disabled \
-            -Dsdl2-audio=disabled \
-            -Dsdl2-video=disabled \
-            -Dopenal=disabled \
-            -Dwasapi=enabled \
-            -Dd3d11=enabled \
-            -Dd3d-hwaccel=enabled \
-            -Dvulkan=enabled \
-            -Dshaderc=enabled \
-            -Dspirv-cross=enabled \
-            -Dlibplacebo=enabled \
-            -Degl=enabled \
-            -Dgl=enabled \
-            -Dgl-win32=enabled \
-            -Dmanpage-build=disabled \
-            -Dhtml-build=disabled \
-            -Dpdf-build=disabled
-          
-          ninja -C build -j$(nproc)
-          ../llvm-mingw/bin/llvm-strip.exe build/mpv.exe
-          mv build/mpv.exe "$WORKSPACE/MPv.exe"
-      
+          meson setup build --buildtype=release -Dcplayer=true -Dlibmpv=false -Dlua=disabled -Djavascript=disabled -Dvulkan=enabled -Dd3d11=enabled -Dwasapi=enabled
+          ninja -C build
+          $STRIP build/mpv.exe
+          mv build/mpv.exe ../MPv.exe
+
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
