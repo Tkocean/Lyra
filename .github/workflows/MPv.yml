@@ -4,48 +4,33 @@ on:
   workflow_dispatch:
     inputs:
       mpv_version:
-        description: 'MPv base version'
         required: true
-        default: 'v0.41.0'
-
+        default: v0.41.0
 jobs:
   windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Meson & Ninja
-        run: |
-          pip install meson ninja
-
-      - name: Download & Extract llvm-mingw
-        shell: bash
+      - run: pip install meson ninja
+      - shell: bash
         run: |
           curl -L https://github.com/mstorsjo/llvm-mingw/releases/download/20240320/llvm-mingw-20240320-msvcrt-x86_64.zip -o llvm-mingw.zip
           unzip -q llvm-mingw.zip
-          # 重命名文件夹，方便后续使用
           mv llvm-mingw-20240320-msvcrt-x86_64 llvm-mingw
-
-      - name: Clone mpv & Inject "Lyra" Version
-        shell: bash
+      - shell: bash
         run: |
           git clone https://github.com/mpv-player/mpv.git
           cd mpv
           git fetch --tags
           git checkout tags/${{ inputs.mpv_version }}
-          
-          # 注入版本号
           cat > version.sh << 'EOF'
           #!/bin/sh
           printf "Lyra"
           EOF
           chmod +x version.sh
-
-      - name: Create Meson Cross File (Critical Fix)
-        shell: bash
+      - shell: bash
         run: |
           WORKSPACE=$(pwd -W)
-          
           cat > mpv-cross.txt << EOF
           [binaries]
           c = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-clang.exe'
@@ -53,35 +38,21 @@ jobs:
           ar = '$WORKSPACE/llvm-mingw/bin/llvm-ar.exe'
           strip = '$WORKSPACE/llvm-mingw/bin/llvm-strip.exe'
           windres = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-windres.exe'
-          pkgconfig = 'pkg-config'
-
+          pkg-config = 'pkg-config'
           [host_machine]
           system = 'windows'
           cpu_family = 'x86_64'
           cpu = 'x86_64'
           endian = 'little'
           EOF
-
-      - name: Build Lyra Edition
-        shell: bash
+      - shell: bash
         run: |
           set -euo pipefail
           WORKSPACE=$(pwd -W)
-          
-          # 优化参数 (统一使用 Full LTO)
-          export CFLAGS="-O3 -march=alderlake -mtune=alderlake -msse4.2 -mavx2 -mfma -mbmi -mbmi2 \
-          -mprefer-vector-width=256 -funroll-loops -funroll-all-loops -fprefetch-loop-arrays \
-          -flto=full -fomit-frame-pointer -ffast-math -ffp-contract=fast \
-          -falign-functions=128 -falign-loops=32 -falign-jumps=32 \
-          -fno-unwind-tables -fno-asynchronous-unwind-tables -ffunction-sections -fdata-sections \
-          -fno-math-errno -fno-trapping-math"
-          
+          export CFLAGS="-O3 -march=alderlake -mtune=alderlake -msse4.2 -mavx2 -mfma -mbmi -mbmi2 -mprefer-vector-width=256 -funroll-loops -funroll-all-loops -fprefetch-loop-arrays -flto=full -fomit-frame-pointer -ffast-math -ffp-contract=fast -falign-functions=128 -falign-loops=32 -falign-jumps=32 -fno-unwind-tables -fno-asynchronous-unwind-tables -ffunction-sections -fdata-sections -fno-math-errno -fno-trapping-math"
           export CXXFLAGS="$CFLAGS -fno-rtti -fno-exceptions"
           export LDFLAGS="-flto=full -Wl,-O3 -Wl,--gc-sections -Wl,--icf=all -Wl,--sort-common -Wl,--as-needed"
-
           cd mpv
-          
-          # 注意：这里加上了 --cross-file 参数
           meson setup build \
             --cross-file=../mpv-cross.txt \
             --buildtype=release \
@@ -91,7 +62,7 @@ jobs:
             -Db_ndebug=if-release \
             -Doptimization=3 \
             -Dauto_features=disabled \
-            -Dcplayer=enabled \
+            -Dcplayer=true \
             -Dlibmpv=false \
             -Dffmpeg=enabled \
             -Dlibass=enabled \
@@ -115,15 +86,10 @@ jobs:
             -Diconv=disabled \
             -Dtest=disabled \
             -Dmanpage-build=disabled
-
           ninja -C build -j$(nproc)
-          
-          # 剥离并输出
           ../llvm-mingw/bin/llvm-strip.exe build/mpv.exe
-          mv build/mpv.exe "$WORKSPACE/mpv.exe"
-
-      - name: Upload
-        uses: actions/upload-artifact@v4
+          mv build/mpv.exe "$WORKSPACE/MPv.exe"
+      - uses: actions/upload-artifact@v4
         with:
-          name: mpv-Lyra-Edition
-          path: mpv.exe
+          name: MPv
+          path: MPv.exe
