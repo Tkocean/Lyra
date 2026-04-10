@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       mpv_version:
-        description: 'mpv base version (for checkout)'
+        description: 'MPv base version (for checkout)'
         required: true
         default: 'v0.41.0'
 
