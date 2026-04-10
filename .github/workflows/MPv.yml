@@ -17,6 +17,8 @@ jobs:
           curl -L https://github.com/mstorsjo/llvm-mingw/releases/download/20240320/llvm-mingw-20240320-msvcrt-x86_64.zip -o llvm-mingw.zip
           unzip -q llvm-mingw.zip
           mv llvm-mingw-20240320-msvcrt-x86_64 llvm-mingw
+          echo "TOOLCHAIN_ROOT=$(pwd -W)/llvm-mingw" >> $GITHUB_ENV
+          echo "PATH=$(pwd -W)/llvm-mingw/bin:$PATH" >> $GITHUB_ENV
       - shell: bash
         run: |
           git clone https://github.com/mpv-player/mpv.git
@@ -30,62 +32,112 @@ jobs:
           chmod +x version.sh
       - shell: bash
         run: |
+          cd mpv
+          meson wrap update-db
+          meson wrap install expat harfbuzz freetype2 libpng zlib
+          mkdir -p subprojects
+          cat > subprojects/libass.wrap << EOF
+[wrap-git]
+url = https://github.com/libass/libass
+revision = master
+depth = 1
+EOF
+          cat > subprojects/libplacebo.wrap << EOF
+[wrap-git]
+url = https://github.com/haasn/libplacebo
+revision = master
+depth = 1
+clone-recursive = true
+EOF
+          cat > subprojects/ffmpeg.wrap << EOF
+[wrap-git]
+url = https://gitlab.freedesktop.org/gstreamer/meson-ports/ffmpeg.git
+revision = meson-8.0
+depth = 1
+[provide]
+libavcodec = libavcodec_dep
+libavdevice = libavdevice_dep
+libavfilter = libavfilter_dep
+libavformat = libavformat_dep
+libavutil = libavutil_dep
+libswresample = libswresample_dep
+libswscale = libswscale_dep
+EOF
+      - shell: bash
+        run: |
           WORKSPACE=$(pwd -W)
           cat > mpv-cross.txt << EOF
-          [binaries]
-          c = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-clang.exe'
-          cpp = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-clang++.exe'
-          ar = '$WORKSPACE/llvm-mingw/bin/llvm-ar.exe'
-          strip = '$WORKSPACE/llvm-mingw/bin/llvm-strip.exe'
-          windres = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-windres.exe'
-          pkg-config = 'pkg-config'
-          [host_machine]
-          system = 'windows'
-          cpu_family = 'x86_64'
-          cpu = 'x86_64'
-          endian = 'little'
-          EOF
+[binaries]
+c = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-clang.exe'
+cpp = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-clang++.exe'
+ar = '$WORKSPACE/llvm-mingw/bin/llvm-ar.exe'
+strip = '$WORKSPACE/llvm-mingw/bin/llvm-strip.exe'
+windres = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-windres.exe'
+pkg-config = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-pkg-config.exe'
+[host_machine]
+system = 'windows'
+cpu_family = 'x86_64'
+cpu = 'x86_64'
+endian = 'little'
+[properties]
+sys_root = '$WORKSPACE/llvm-mingw/x86_64-w64-mingw32'
+pkg_config_libdir = '$WORKSPACE/llvm-mingw/x86_64-w64-mingw32/lib/pkgconfig'
+prefer_static = true
+EOF
       - shell: bash
         run: |
           set -euo pipefail
           WORKSPACE=$(pwd -W)
-          export CFLAGS="-O3 -march=alderlake -mtune=alderlake -msse4.2 -mavx2 -mfma -mbmi -mbmi2 -mprefer-vector-width=256 -funroll-loops -funroll-all-loops -fprefetch-loop-arrays -flto=full -fomit-frame-pointer -ffast-math -ffp-contract=fast -falign-functions=128 -falign-loops=32 -falign-jumps=32 -fno-unwind-tables -fno-asynchronous-unwind-tables -ffunction-sections -fdata-sections -fno-math-errno -fno-trapping-math"
+          export CFLAGS="-O3 -march=x86-64-v3 -mtune=generic -mavx2 -funroll-loops -flto=full -fomit-frame-pointer -ffast-math -ffp-contract=fast -falign-functions=128 -falign-loops=32 -falign-jumps=32 -fno-unwind-tables -fno-asynchronous-unwind-tables -ffunction-sections -fdata-sections -fno-math-errno -fno-trapping-math"
           export CXXFLAGS="$CFLAGS -fno-rtti -fno-exceptions"
-          export LDFLAGS="-flto=full -Wl,-O3 -Wl,--gc-sections -Wl,--icf=all -Wl,--sort-common -Wl,--as-needed"
+          export LDFLAGS="-flto=full -static -Wl,-O3 -Wl,--gc-sections -Wl,--icf=all -Wl,--sort-common -Wl,--as-needed"
           cd mpv
           meson setup build \
             --cross-file=../mpv-cross.txt \
             --buildtype=release \
             --prefix="$WORKSPACE/install" \
+            -Ddefault_library=static \
+            -Dprefer_static=true \
             -Db_lto=true \
             -Db_lto_mode=full \
             -Db_ndebug=if-release \
             -Doptimization=3 \
-            -Dauto_features=disabled \
             -Dcplayer=true \
             -Dlibmpv=false \
-            -Dffmpeg=enabled \
-            -Dlibass=enabled \
-            -Dvulkan=enabled \
-            -Dd3d11=enabled \
-            -Degl=enabled \
-            -Dgl=enabled \
-            -Dwasapi=enabled \
+            -Dbuild-date=false \
+            -Dtests=false \
             -Dlua=disabled \
             -Djavascript=disabled \
             -Dcplugins=disabled \
-            -Dnetwork=disabled \
-            -Dbluray=disabled \
-            -Ddvdnav=disabled \
             -Dcdda=disabled \
             -Ddvbin=disabled \
+            -Ddvdnav=disabled \
+            -Dlibbluray=disabled \
             -Dlibarchive=disabled \
             -Drubberband=disabled \
             -Dzimg=disabled \
             -Dlcms2=disabled \
-            -Diconv=disabled \
-            -Dtest=disabled \
-            -Dmanpage-build=disabled
+            -Duchardet=disabled \
+            -Dvapoursynth=disabled \
+            -Dsdl2=disabled \
+            -Dsdl2-gamepad=disabled \
+            -Dsdl2-audio=disabled \
+            -Dsdl2-video=disabled \
+            -Dopenal=disabled \
+            -Dwasapi=enabled \
+            -Dd3d11=enabled \
+            -Dd3d-hwaccel=enabled \
+            -Dvulkan=enabled \
+            -Dshaderc=enabled \
+            -Dspirv-cross=enabled \
+            -Dlibplacebo=enabled \
+            -Dlibplacebo-next=enabled \
+            -Degl=enabled \
+            -Dgl=enabled \
+            -Dgl-win32=enabled \
+            -Dmanpage-build=disabled \
+            -Dhtml-build=disabled \
+            -Dpdf-build=disabled
           ninja -C build -j$(nproc)
           ../llvm-mingw/bin/llvm-strip.exe build/mpv.exe
           mv build/mpv.exe "$WORKSPACE/MPv.exe"
