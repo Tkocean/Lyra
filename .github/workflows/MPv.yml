@@ -1,4 +1,4 @@
-name: Build MPv
+name: Build MPv (Windows X64)
 on:
   workflow_dispatch:
     inputs:
