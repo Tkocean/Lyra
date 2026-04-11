@@ -9,25 +9,20 @@ on:
 jobs:
   windows:
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: msys2/setup-msys2@v2
         with:
-          python-version: '3.11'
-      - name: Install Tools
-        run: pip install meson ninja
-      - name: Get Toolchain
-        shell: bash
-        run: curl -L https://github.com/mstorsjo/llvm-mingw/releases/download/20240320/llvm-mingw-20240320-msvcrt-x86_64.zip -o llvm-mingw.zip && unzip -q llvm-mingw.zip && mv llvm-mingw-20240320-msvcrt-x86_64 llvm-mingw
+          msystem: CLANG64
+          update: true
+          install: git mingw-w64-clang-x86_64-toolchain mingw-w64-clang-x86_64-meson mingw-w64-clang-x86_64-ninja mingw-w64-clang-x86_64-ffmpeg mingw-w64-clang-x86_64-libass
       - name: Get mpv
-        shell: bash
         run: git clone https://github.com/mpv-player/mpv.git && cd mpv && git checkout ${{ inputs.mpv_version }} && echo "#!/bin/sh" > version.sh && echo "printf \"Lyra\"" >> version.sh && chmod +x version.sh
-      - name: Create Cross File
-        shell: bash
-        run: WORKSPACE=$(pwd -W) && echo "[binaries]" > mpv-cross.txt && echo "c = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-clang.exe'" >> mpv-cross.txt && echo "cpp = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-clang++.exe'" >> mpv-cross.txt && echo "ar = '$WORKSPACE/llvm-mingw/bin/llvm-ar.exe'" >> mpv-cross.txt && echo "strip = '$WORKSPACE/llvm-mingw/bin/llvm-strip.exe'" >> mpv-cross.txt && echo "windres = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-windres.exe'" >> mpv-cross.txt && echo "pkg-config = '$WORKSPACE/llvm-mingw/bin/x86_64-w64-mingw32-pkg-config.exe'" >> mpv-cross.txt && echo "[host_machine]" >> mpv-cross.txt && echo "system = 'windows'" >> mpv-cross.txt && echo "cpu_family = 'x86_64'" >> mpv-cross.txt && echo "cpu = 'x86_64'" >> mpv-cross.txt && echo "endian = 'little'" >> mpv-cross.txt
       - name: Build
-        shell: bash
-        run: set -euo pipefail && WORKSPACE=$(pwd -W) && export CFLAGS="-O3 -mavx2 -funroll-loops -flto=full -fomit-frame-pointer -ffast-math -falign-functions=128 -ffunction-sections -fdata-sections" && export CXXFLAGS="$CFLAGS -fno-rtti -fno-exceptions" && export LDFLAGS="-flto=full -static -Wl,-O3 -Wl,--gc-sections -Wl,--icf=all -Wl,--sort-common -Wl,--as-needed" && cd mpv && meson setup build --cross-file=../mpv-cross.txt --buildtype=release -Dcplayer=true -Dlibmpv=false -Dlua=disabled -Djavascript=disabled && ninja -C build && ../llvm-mingw/bin/llvm-strip.exe build/mpv.exe && mv build/mpv.exe "$WORKSPACE/MPv.exe"
+        run: cd mpv && export CFLAGS="-O3 -mavx2 -funroll-loops -flto=full -fomit-frame-pointer -ffast-math -falign-functions=128 -ffunction-sections -fdata-sections" && export CXXFLAGS="$CFLAGS -fno-rtti -fno-exceptions" && export LDFLAGS="-flto=full -static -Wl,-O3 -Wl,--gc-sections -Wl,--icf=all -Wl,--sort-common -Wl,--as-needed" && meson setup build --buildtype=release -Dcplayer=true -Dlibmpv=false -Dlua=disabled -Djavascript=disabled && ninja -C build && strip build/mpv.exe && mv build/mpv.exe ../MPv.exe
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
