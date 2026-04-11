@@ -22,9 +22,12 @@ jobs:
       - name: Get mpv
         run: git clone https://github.com/mpv-player/mpv.git && cd mpv && git checkout ${{ inputs.mpv_version }} && echo "#!/bin/sh" > version.sh && echo "printf \"Lyra\"" >> version.sh && chmod +x version.sh
       - name: Build
-        run: cd mpv && export CFLAGS="-O3 -mavx2 -funroll-loops -flto=full -fomit-frame-pointer -ffast-math -falign-functions=128 -ffunction-sections -fdata-sections" && export CXXFLAGS="$CFLAGS -fno-rtti -fno-exceptions" && export LDFLAGS="-flto=full -Wl,-O3 -Wl,--gc-sections -Wl,--icf=all -Wl,--sort-common -Wl,--as-needed" && meson setup build --buildtype=release -Dcplayer=true -Dlibmpv=false -Dlua=disabled -Djavascript=disabled -Dvulkan=disabled -Dlibplacebo=enabled && ninja -C build && strip build/mpv.exe && mv build/mpv.exe ../MPv.exe
+        run: cd mpv && export CFLAGS="-O3 -mavx2 -funroll-loops -flto=full -fomit-frame-pointer -ffast-math -falign-functions=128 -ffunction-sections -fdata-sections" && export CXXFLAGS="$CFLAGS -fno-rtti -fno-exceptions" && export LDFLAGS="-flto=full -Wl,-O3 -Wl,--gc-sections -Wl,--icf=all -Wl,--sort-common -Wl,--as-needed" && meson setup build --buildtype=release -Dcplayer=true -Dlibmpv=false -Dlua=disabled -Djavascript=disabled -Dvulkan=disabled && ninja -C build && strip build/mpv.exe && mkdir -p ../dist && mv build/mpv.exe ../dist/
+      - name: Collect DLLs
+        shell: bash
+        run: mkdir -p dist && cp /mingw64/bin/{libavcodec-*.dll,libavformat-*.dll,libavutil-*.dll,libswscale-*.dll,libswresample-*.dll,libass-*.dll,libfreetype-*.dll,libharfbuzz-*.dll,libglib-2.0-*.dll,libiconv-*.dll,libintl-*.dll,libpng16-*.dll,zlib1.dll,libbrotlidec.dll,libbrotlicommon.dll,libgraphite2.dll,libplacebo-*.dll,libshaderc_shared.dll,libspirv-cross-c-shared.dll} dist/ 2>/dev/null || true
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: MPv
-          path: MPv.exe
+          path: dist/
