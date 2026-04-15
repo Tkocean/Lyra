@@ -6,7 +6,7 @@ on:
       version:
         description: 'sing-box'
         required: true
-        default: 'v1.14.0-alpha.12'
+        default: 'v1.13.8'
 
       go_version:
         description: 'Go version'
