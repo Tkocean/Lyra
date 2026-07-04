@@ -25,11 +25,19 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ inputs.go_version }}
+          cache: true
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y clang llvm lld unzip curl git
+      - name: Cache Android NDK
+        id: cache-ndk
+        uses: actions/cache@v4
+        with:
+          path: android-ndk-r26d
+          key: android-ndk-r26d-linux
       - name: Setup Android NDK
+        if: steps.cache-ndk.outputs.cache-hit != 'true'
         run: |
           curl -L https://dl.google.com/android/repository/android-ndk-r26d-linux.zip -o ndk.zip
           unzip -q ndk.zip
@@ -74,7 +82,15 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ inputs.go_version }}
+          cache: true
+      - name: Cache llvm-mingw
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: llvm-mingw
+          key: llvm-mingw-20240320-msvcrt-x86_64
       - name: Setup llvm-mingw
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
         shell: bash
         run: |
           curl -L https://github.com/mstorsjo/llvm-mingw/releases/download/20240320/llvm-mingw-20240320-msvcrt-x86_64.zip -o llvm-mingw.zip
@@ -119,7 +135,14 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: 'latest'
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-frontend
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
       - name: Build Frontend
         run: |
           npm install -g pnpm
