@@ -6,12 +6,12 @@ on:
       version:
         description: 'sing-box'
         required: true
-        default: 'v1.13.9'
+        default: 'v1.13.16'
 
       go_version:
         description: 'Go version'
         required: true
-        default: '1.26.2'
+        default: '1.26.5'
 
       build_tags:
         description: 'Go build tags'
