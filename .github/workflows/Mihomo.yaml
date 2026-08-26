@@ -167,7 +167,7 @@ jobs:
         export CXX=aarch64-linux-gnu-g++
         export AR=aarch64-linux-gnu-ar
         export CGO_CFLAGS="-O3 -march=armv8-a+crypto -funroll-loops -flto -fomit-frame-pointer -ffast-math -fPIC -falign-functions=128 -fno-unwind-tables -fno-asynchronous-unwind-tables -ffunction-sections -fdata-sections"
-        export CGO_LDFLAGS="-flto -ldl -Wl,-O1 -Wl,--gc-sections -Wl,--icf=safe -Wl,-z,max-page-size=0x1000"
+        export CGO_LDFLAGS="-flto -ldl -Wl,-O1 -Wl,--gc-sections -Wl,-z,max-page-size=0x1000"
         cd mihomo
         go mod download
         go build -trimpath -ldflags "-s -w -X main.Version=Lyra" -o "$GITHUB_WORKSPACE/mihomo-linux-arm64-cgo"
