@@ -66,7 +66,7 @@ jobs:
         export CGO_LDFLAGS="-flto -ldl -Wl,-O1 -Wl,--gc-sections -Wl,--icf=safe -Wl,-z,max-page-size=0x1000"
         cd mihomo
         go mod download
-        go build -trimpath -ldflags "-s -w -X main.Version=Lyra" -o "$GITHUB_WORKSPACE/mihomo-android-arm64"
+        go build -trimpath -ldflags "-s -w -X 'github.com/metacubex/mihomo/constant.Version=Lyra'" -o "$GITHUB_WORKSPACE/mihomo-android-arm64"
 
     - uses: actions/upload-artifact@v4
       with:
@@ -126,7 +126,7 @@ jobs:
         export CGO_LDFLAGS="-flto -Wl,-O1 -Wl,--gc-sections -Wl,--icf=safe -Wl,-z,max-page-size=0x1000"
         cd mihomo
         go mod download
-        go build -trimpath -ldflags "-s -w -X main.Version=Lyra" -o "$GITHUB_WORKSPACE/mihomo-windows-x64.exe"
+        go build -trimpath -ldflags "-s -w -X 'github.com/metacubex/mihomo/constant.Version=Lyra'" -o "$GITHUB_WORKSPACE/mihomo-windows-x64.exe"
 
     - uses: actions/upload-artifact@v4
       with:
@@ -143,11 +143,6 @@ jobs:
       with:
         go-version: ${{ inputs.go_version }}
 
-    - name: Install Linux ARM64 Cross Compiler
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-
     - name: Clone Mihomo Alpha
       run: |
         git clone https://github.com/MetaCubeX/mihomo.git
@@ -156,23 +151,19 @@ jobs:
         git checkout Alpha
         git submodule update --init --recursive
 
-    - name: Build Linux ARM64 with CGO Optimization
+    - name: Build Linux ARM64 (Pure Go)
       shell: bash
       run: |
         set -euo pipefail
         export GOOS=linux
         export GOARCH=arm64
-        export CGO_ENABLED=1
-        export CC=aarch64-linux-gnu-gcc
-        export CXX=aarch64-linux-gnu-g++
-        export AR=aarch64-linux-gnu-ar
-        export CGO_CFLAGS="-O3 -march=armv8-a+crypto -funroll-loops -flto -fomit-frame-pointer -ffast-math -fPIC -falign-functions=128 -fno-unwind-tables -fno-asynchronous-unwind-tables -ffunction-sections -fdata-sections"
-        export CGO_LDFLAGS="-flto -ldl -Wl,-O1 -Wl,--gc-sections -Wl,-z,max-page-size=0x1000"
+        export CGO_ENABLED=0
+        export GOARM64=v8.0
         cd mihomo
         go mod download
-        go build -trimpath -ldflags "-s -w -X main.Version=Lyra" -o "$GITHUB_WORKSPACE/mihomo-linux-arm64-cgo"
+        go build -trimpath -ldflags "-s -w -X 'github.com/metacubex/mihomo/constant.Version=Lyra'" -o "$GITHUB_WORKSPACE/mihomo-linux-arm64"
 
     - uses: actions/upload-artifact@v4
       with:
-        name: linux-arm64-cgo
-        path: mihomo-linux-arm64-cgo
+        name: linux-arm64
+        path: mihomo-linux-arm64
