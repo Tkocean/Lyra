@@ -1,6 +1,6 @@
 name: GL-MT3600BE Ultimate Build
+
 on:
-  repository_dispatch:
   workflow_dispatch:
 
 env:
@@ -24,7 +24,7 @@ jobs:
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/share/swift
         sudo apt-get update
         sudo apt-get install -y build-essential clang flex bison gawk gettext git libncurses5-dev libssl-dev python3-distutils rsync unzip zlib1g-dev file wget subversion patch swig time
-        sudo timedatectl set-timezone "${{ env:TZ }}"
+        sudo timedatectl set-timezone "${{ env.TZ }}"
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
@@ -44,17 +44,10 @@ jobs:
       run: |
         [ -e $CONFIG_FILE ] && cp $CONFIG_FILE openwrt/.config
         cd openwrt
-        
-        # 1. 源码硬编码修改：默认管理 IP 设为 192.168.6.1
         sed -i 's/192.168.1.1/192.168.6.1/g' package/base-files/files/bin/config_generate
-        
-        # 2. 源码硬编码修改：出厂默认开启 2.4G 和 5G 无线 Wi-Fi 信号
-        sed -i 's/set wireless.radio${devidx}.disabled=1/set wireless.radio${devidx}.disabled=0/g' package/kernel/mac80211/files/lib/wifi/mac80211.sh
-        
-        # 3. 深度注入内核底层网络传输参数（全速启用 BBR+Cake 队列组合）
+        sed -i '/disabled=1/s/disabled=1/disabled=0/g' package/kernel/mac80211/files/lib/wifi/mac80211.sh
         mkdir -p files/etc
         cat << 'EOF' >> files/etc/sysctl.conf
-        # 核心网络层极限转发加速
         net.core.default_qdisc = cake
         net.ipv4.tcp_congestion_control = bbr
         net.core.netdev_max_backlog = 10000
@@ -63,7 +56,6 @@ jobs:
         net.ipv4.tcp_rmem = 4096 87380 16777216
         net.ipv4.tcp_wmem = 4096 65536 16777216
         EOF
-        
         make defconfig
 
     - name: Download package
@@ -78,13 +70,12 @@ jobs:
       id: compile
       run: |
         cd openwrt
-        echo -e "$(nproc) thread compile"
         make -j$(nproc) || make -j1 V=s
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Organize files
       id: organize
-      if: steps:compile.outputs.status == 'success'
+      if: steps.compile.outputs.status == 'success'
       run: |
         cd openwrt/bin/targets/mediatek/filogic
         rm -rf packages
@@ -93,8 +84,7 @@ jobs:
 
     - name: Upload firmware to Artifacts
       uses: actions/upload-artifact@v4
-      if: steps:organize.outputs.status == 'success' && !cancelled()
+      if: steps.organize.outputs.status == 'success' && !cancelled()
       with:
         name: OpenWrt_GL-MT3600BE_Firmware
         path: ${{ env.FIRMWARE }}/*sysupgrade.bin
-
