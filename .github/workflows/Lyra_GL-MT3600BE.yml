@@ -1,5 +1,4 @@
 name: GL-MT3600BE Ultimate Build
-
 on:
   repository_dispatch:
   workflow_dispatch:
