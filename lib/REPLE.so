@@ -9,13 +9,13 @@ https://api-sub.0z.gs/
 
 
 电脑用户
-1、先确保当前vpn软件是最新的，可以看我们官网的教程去下载软件或者手动下载最新版
+1、先确保当前vpn软件是最新的，可以看我们官网的使用文档去下载软件或者手动下载最新版
 clashverge官网：https://www.clashverge.dev/install.html
 2、官网首页/控制台/仪表盘，一键订阅/复制链接，复制完订阅链接后导入链接到vpn软件试试
-3、在vpn软件首页那边把系统代理关了，开虚拟网卡模式，虚拟网卡模式打不开的话点一下蓝色小扳手就可以开启了（实在不行就跳过）
-4、（主要）开全局模式，选择GLOBAL代理组里面的地区节点，比如香港或者新加坡高倍3x节点，然后去vpn软件设置里面关闭ipv6和尝试打开dns覆写
+3、在vpn软件首页那边把系统代理关了，开虚拟网卡模式，虚拟网卡模式打不开的话点一下蓝色小扳手就可以开启了（实在不会就跳过）
+4、（主要）开全局模式，选择GLOBAL代理组里面的地区节点，比如新加坡高倍3x节点，然后去vpn软件设置里面关闭ipv6和尝试打开dns覆写
 5、(Windows) 右键任务栏windows徽标，然后启动终端管理员，输入"ipconfig /flushdns"后按回车键，等待清理完成后再看看
-6、(MacOS) 按 Command + 空格键 打开聚焦搜索（Spotlight），输入 终端 并回车，输入"sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder"后按回车键，等待清理完成后再看看
+6、(MacOS) 按"Command + 空格"键 打开"聚焦搜索Spotlight"，输入"终端"并回车，然后在终端窗口里输入"sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder"后按回车键，等待清理完成后再看看
 ⚠️ 特别备注：
 7、如果您是校园网用户，在确定下载了最新客户端之后依旧无法使用，清去官网使用文档看一下DNS重写教程或者手机开飞行模式1分钟，宽带用户断电光猫几分钟
 8、近期发现，部分用户如果在客户端点批零测试延迟会导致用户断连，请各位删除订阅重新导入之后不要测试延迟节点，直接选择节点使用
@@ -59,7 +59,7 @@ https://shop.fish1.cc/
 官网首页/控制台/仪表盘，一键订阅/复制链接，复制完订阅链接后导入链接到vpn软件试试，然后使用带3x标识的节点，也可以尝试在软件设置里打开ipv6，其他节点会陆续自行恢复
 
 
-浏览器问题，不要用任何国内浏览器，推荐Google Chrome或者Via（必须关闭浏览器设置里的安全DNS和安全浏览）
+浏览器问题，不要用任何国内浏览器，推荐Chrome或Via（必须关闭浏览器设置里的安全DNS和安全浏览）
 
 
 请在官网 “使用文档” “查看教程”处 按照你的设备下载所需要的客户端然后查看教程使用
@@ -96,9 +96,6 @@ https://shop.fish1.cc/
 steam在规则模式下打不开的话，在代理组那边将 Game 这个分组里面的选项改成 Proxies 即可
 
 
-右键任务栏windows徽标，然后启动终端管理员，输入ipconfig /flushdns回车，等待清理完成后再看看
-
-
 导入订阅的时候不要开启系统代理或者是虚拟网卡模式，做了后还是不行的话就升级下客户端，升级客户端后还是不行就发订阅链接我
 
 
@@ -108,41 +105,42 @@ clashmeta软件用户，打开vpn后，第二项点进去，右上角有三个�
 如果您是校园网用户，在确定下载了官网使用文档的客户端之后依旧无法使用，清去官网使用文档看一下DNS重写教程或者手机开飞行模式1分钟，宽带用户断电光猫几分钟
 
 
-近期发现，部分用户如果在客户端点批零测试延迟会导致用户断连，请各位删除订阅重新导入之后不要测试延迟节点，直接选择节点使用
+近期发现，部分用户如果在客户端点批量测试延迟会导致用户断连，请各位删除订阅重新导入之后不要测试延迟节点，直接选择节点使用
 
 
 
 
 
 若clashmeta无效下这个，官网使用文档里也有教程可以参考
-安卓 nekobox
+安卓 Nekobox
 http://wwaxr.zizi2.com/iixJo4906ywb
 
 
 
 
 
-新精灵端下载：
+新精灵自研客户端：
 
-windows端： 
+windows 电脑 
 https://storage.0443.link/d/qw-Local/%E6%96%B0%E7%B2%BE%E7%81%B5/%E7%B2%BE%E7%81%B5%E5%AD%A6%E9%99%A2_setup_4.7.0.exe?sign=WddZP0M1ewwzifswxn3VeCcWl1-HVC-OKgn39KBvhNk=:0
 
-安卓手机: 
+安卓
 https://storage.0443.link/d/qw-Local/%E6%96%B0%E7%B2%BE%E7%81%B5/%E7%B2%BE%E7%81%B5%E5%AD%A6%E9%99%A2_v3.5.2.apk?sign=s1B0i7yscZJhgiBJ8nYpKp3K4GqveUz5RcFMdUN73Z4=:0
 
-Apple Silicon（M1/M2/M3）：
+苹果 M 芯片（ARM64）
 https://storage.0443.link/d/qw-Local/%E6%96%B0%E7%B2%BE%E7%81%B5/%E7%B2%BE%E7%81%B5%E5%AD%A6%E9%99%A2_setup_4.7.0_arm64.dmg?sign=jJyX9HsJW8G3L9y1U2JzdTLx14USKTmQi3TYTBk2wkM=:0
 
-Intel（x64）：
+苹果 Intel 芯片（x64）
 https://storage.0443.link/d/qw-Local/%E6%96%B0%E7%B2%BE%E7%81%B5/%E7%B2%BE%E7%81%B5%E5%AD%A6%E9%99%A2_setup_4.7.0_x64.dmg?sign=siKBOWDu5UQHDVIgm-maUi-Rsmd2onE5T7uTowtpEPA=:0
 
-进去之后如果提示危险网站，点击「高级」，之后选择「确定进入网站」即可。
+进去之后如果提示危险网站，点击「高级」，之后选择「确定进入网站」即可
+如果进不去下载页面建议换一个浏览器进入
 
 
 
 
 
-蓝奏云（旧精灵学院）
+蓝奏云（旧精灵自研客户端）
 
 Windows 电脑
 http://wwaxr.zizi2.com/iO7Ox46q0zeb
@@ -156,7 +154,8 @@ http://wwaxr.zizi2.com/il3F546q321i
 苹果 Intel 芯片（x64）
 http://wwaxr.zizi2.com/id90i46q4ixc
 
-进去之后如果提示危险网站，点击「高级」，之后选择「确定进入网站」即可。
+进去之后如果提示危险网站，点击「高级」，之后选择「确定进入网站」即可
+如果进不去下载页面建议换一个浏览器进入
 
 
 
@@ -164,18 +163,17 @@ http://wwaxr.zizi2.com/id90i46q4ixc
 
 蓝奏云（clash）
 
-windows c64
+windows 电脑
 http://wwaxr.zizi2.com/iSTbN3qz5wqd
 
 安卓
 http://wwaxr.zizi2.com/ilA173sr22ud
 
-苹果m芯片 
+苹果 M 芯片（ARM64） 
 http://wwaxr.zizi2.com/iLlam3qz6lfc
 
-
-电脑intel芯片
+苹果 Intel 芯片（x64）
 http://wwaxr.zizi2.com/iHQbU3qz6coh
 
-进去之后提示危险网站，点高级之后 确定进入网站
+进去之后如果提示危险网站，点击「高级」，之后选择「确定进入网站」即可
 如果进不去下载页面建议换一个浏览器进入
