@@ -182,3 +182,38 @@ http://wwaxr.zizi2.com/iHQbU3qz6coh
 
 进去之后如果提示危险网站，点击「高级」，之后选择「确定进入网站」即可
 如果进不去下载页面建议换一个浏览器进入
+
+
+
+
+
+！经测试部分用户有效，不保证百分百解决
+目前部分用户碰到ai降权/封号的问题，经测试非节点问题，主要是目前几大ai都开始对用户时区/本机真实IP（主要是通过 WebRTC 漏洞探测）进行交叉比对。
+遇到此问题的用户可以通过更改非Asia/Shanghai时区，并开启虚拟网卡模式TUN模式加全局代理来解决
+各系统一键修改时区命令（以修改为美国纽约为例）
+
+Windows系统的用户（鼠标右键点击开始菜单，选择命令提示符管理员或终端管理员
+tzutil /s "Eastern Standard Time"
+
+Mac 系统的用户（打开终端运行，需输入开机密码）
+sudo systemsetup -settimezone America/New_York
+
+Linux 系统的用户（终端执行）
+sudo timedatectl set-timezone America/New_York
+
+建议同步修改系统“地区”设置
+Windows：打开设置，时间和语言， 区域，将国家或地区更改为美国
+Mac：打开系统设置，通用，语言与地区，将地区更改为美国
+
+恢复中国标准时区的命令
+
+Windows：
+tzutil /s "China Standard Time"
+
+Mac：
+sudo systemsetup -settimezone Asia/Shanghai
+
+Linux：
+sudo timedatectl set-timezone Asia/Shanghai
+
+恢复时区后，记得将系统设置里的地区也改回中国
